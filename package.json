@@ -1,0 +1,20 @@
+{
+  "name": "wg-demo",
+  "version": "0.1.0",
+  "description": "## Purpose",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luke-mayer/web-game-demo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/luke-mayer/web-game-demo/issues"
+  },
+  "homepage": "https://github.com/luke-mayer/web-game-demo#readme"
+}
