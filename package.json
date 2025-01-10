@@ -16,5 +16,11 @@
   "bugs": {
     "url": "https://github.com/luke-mayer/web-game-demo/issues"
   },
-  "homepage": "https://github.com/luke-mayer/web-game-demo#readme"
+  "homepage": "https://github.com/luke-mayer/web-game-demo#readme",
+  "dependencies": {
+    "express": "^4.21.2",
+    "nodeman": "^1.1.2",
+    "nodemon": "^3.1.9",
+    "socket.io": "^4.8.1"
+  }
 }
