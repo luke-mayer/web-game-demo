@@ -6,7 +6,6 @@ class Example extends Phaser.Scene {
     super("wg-demo");
 
     this.player = null;
-    this.flashlight = null;
     this.renderTexture = null;
   }
 
@@ -38,7 +37,7 @@ class Example extends Phaser.Scene {
     const y = 300;
 
     // Background
-    this.add.image(x, y, "sky");
+    const map = this.add.image(x, y, "sky");
 
     this.reticle = this.add.image(x, y, "reticle", 10);
 
@@ -64,17 +63,30 @@ class Example extends Phaser.Scene {
       add: false,
     });
 
+    const maskImage = this.make.image({
+      x: 0,
+      y: 0,
+      key: rt.texture.key,
+      add: false,
+    });
+
     // Fog of war
-    this.fow = this.add.graphics();
-    this.fow.fillStyle(0x000000, 1);
-    this.fow.fillRect(0, 0, this.game.config.width, this.game.config.height);
+    const cover = this.add.graphics();
+    cover.fillStyle(0x000000, 1);
+    cover.fillRect(0, 0, this.game.config.width, this.game.config.height);
+    cover.generateTexture(
+      "fog",
+      this.game.config.width,
+      this.game.config.height,
+    );
 
-    // Flashlight
-    this.flashlight = this.add.graphics();
-    const fowMask = this.flashlight.createGeometryMask();
-    this.fow.setMask(fowMask);
+    const fogImage = this.add.image(0, 0, "fog").setOrigin(0);
+    fogImage.mask = new Phaser.Display.Masks.BitmapMask(this, maskImage);
+    fogImage.mask.invertAlpha = true;
 
-    fowMask.invertAlpha = true;
+    map.mask = new Phaser.Display.Masks.BitmapMask(this, maskImage);
+
+    this.renderTexture = rt;
   }
 
   update() {
@@ -113,8 +125,6 @@ class Example extends Phaser.Scene {
       this.reticle.y,
     );
 
-    this.flashlight.clear();
-
     const coneLength = 200;
     const coneAngle = Phaser.Math.DegToRad(30);
     const playerAngle = this.player.rotation;
@@ -126,14 +136,19 @@ class Example extends Phaser.Scene {
     const endX2 = startX + Math.cos(playerAngle + coneAngle) * coneLength;
     const endY2 = startY + Math.sin(playerAngle + coneAngle) * coneLength;
 
-    this.flashlight.fillStyle(0xffffff, 1);
-    this.flashlight.beginPath();
-    this.flashlight.moveTo(startX, startY);
-    this.flashlight.lineTo(endX1, endY1);
-    this.flashlight.lineTo(endX2, endY2);
-    this.flashlight.closePath();
-    this.flashlight.fillPath();
-    this.light.visible = false;
+    const coneGraphics = this.add.graphics();
+    coneGraphics.clear();
+    coneGraphics.fillStyle(0xffffff, 1);
+    coneGraphics.beginPath();
+    coneGraphics.moveTo(startX, startY);
+    coneGraphics.lineTo(endX1, endY1);
+    coneGraphics.lineTo(endX2, endY2);
+    coneGraphics.closePath();
+    coneGraphics.fillPath();
+    coneGraphics.visible = false;
+
+    this.renderTexture.clear();
+    this.renderTexture.draw(coneGraphics, 400, 300);
   }
 }
 
