@@ -7,11 +7,13 @@ var graphics;
 class Example extends Phaser.Scene {
   player;
   cursors;
+  flashLightIsOn;
 
   constructor() {
     super("wg-demo");
 
     this.player = null;
+    this.flashLightIson = false;
   }
 
   preload() {
@@ -82,6 +84,18 @@ class Example extends Phaser.Scene {
       }
     });
 
+    this.input.keyboard.on(
+      "keydown-F",
+      () => {
+        if (this.flashLightIsOn) {
+          this.flashLightIsOn = false;
+        } else {
+          this.flashLightIsOn = true;
+        }
+      },
+      this,
+    );
+
     raycaster = this.raycasterPlugin.createRaycaster();
 
     ray = raycaster.createRay({
@@ -105,7 +119,9 @@ class Example extends Phaser.Scene {
       fillStyle: { color: 0xffffff, alpha: 0.3 },
     });
 
-    draw();
+    if (this.flashLightIsOn) {
+      draw();
+    }
   }
 
   update() {
@@ -144,7 +160,12 @@ class Example extends Phaser.Scene {
 
     ray.setAngle(angle);
     intersections = ray.castCone();
-    draw();
+
+    if (this.flashLightIsOn) {
+      draw();
+    } else {
+      graphics.clear();
+    }
   }
 }
 
