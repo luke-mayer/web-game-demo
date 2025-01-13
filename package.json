@@ -21,6 +21,7 @@
     "express": "^4.21.2",
     "nodemon": "^3.1.9",
     "phaser": "^3.87.0",
+    "phaser-raycaster": "^0.10.11",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {

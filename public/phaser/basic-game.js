@@ -1,6 +1,13 @@
+import PhaserRaycaster from "phaser-raycaster";
+
 class Example extends Phaser.Scene {
   player;
   cursors;
+  raycaster;
+  ray;
+  intersections;
+  obstacles;
+  graphics;
 
   constructor() {
     super("wg-demo");
@@ -57,36 +64,6 @@ class Example extends Phaser.Scene {
     this.cameras.main.startFollow(this.player);
 
     // render texture for fog of war
-    const rt = this.make.renderTexture({
-      width: this.game.config.width,
-      height: this.game.config.height,
-      add: false,
-    });
-
-    const maskImage = this.make.image({
-      x: 0,
-      y: 0,
-      key: rt.texture.key,
-      add: false,
-    });
-
-    // Fog of war
-    const cover = this.add.graphics();
-    cover.fillStyle(0x000000, 1);
-    cover.fillRect(0, 0, this.game.config.width, this.game.config.height);
-    cover.generateTexture(
-      "fog",
-      this.game.config.width,
-      this.game.config.height,
-    );
-
-    const fogImage = this.add.image(0, 0, "fog").setOrigin(0);
-    fogImage.mask = new Phaser.Display.Masks.BitmapMask(this, maskImage);
-    fogImage.mask.invertAlpha = true;
-
-    map.mask = new Phaser.Display.Masks.BitmapMask(this, maskImage);
-
-    this.renderTexture = rt;
   }
 
   update() {
@@ -124,31 +101,6 @@ class Example extends Phaser.Scene {
       this.reticle.x,
       this.reticle.y,
     );
-
-    const coneLength = 200;
-    const coneAngle = Phaser.Math.DegToRad(30);
-    const playerAngle = this.player.rotation;
-
-    const startX = this.player.x;
-    const startY = this.player.y;
-    const endX1 = startX + Math.cos(playerAngle - coneAngle) * coneLength;
-    const endY1 = startY + Math.sin(playerAngle - coneAngle) * coneLength;
-    const endX2 = startX + Math.cos(playerAngle + coneAngle) * coneLength;
-    const endY2 = startY + Math.sin(playerAngle + coneAngle) * coneLength;
-
-    const coneGraphics = this.add.graphics();
-    coneGraphics.clear();
-    coneGraphics.fillStyle(0xffffff, 1);
-    coneGraphics.beginPath();
-    coneGraphics.moveTo(startX, startY);
-    coneGraphics.lineTo(endX1, endY1);
-    coneGraphics.lineTo(endX2, endY2);
-    coneGraphics.closePath();
-    coneGraphics.fillPath();
-    coneGraphics.visible = false;
-
-    this.renderTexture.clear();
-    this.renderTexture.draw(coneGraphics, 400, 300);
   }
 }
 
@@ -156,6 +108,7 @@ const config = {
   type: Phaser.AUTO,
   width: 800,
   height: 600,
+  backgroundColor: "black",
   //parent: "phaser-example",
   physics: {
     default: "arcade",
@@ -163,6 +116,15 @@ const config = {
       gravity: { y: 0 },
       debug: false,
     },
+  },
+  plugins: {
+    scene: [
+      {
+        key: "PhaserRaycaster",
+        plugin: PhaserRaycaster,
+        mapping: "raycasterPlugin",
+      },
+    ],
   },
   scene: Example,
 };
