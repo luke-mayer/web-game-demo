@@ -58,6 +58,30 @@ class Example extends Phaser.Scene {
     this.cameras.main.zoom = 1.0;
     this.cameras.main.startFollow(this.player);
 
+    // Locks pointer to game (and makes curser hide)
+    this.input.on("pointerdown", () => {
+      this.input.mouse.requestPointerLock();
+    });
+
+    // Exit pointer lock when Q or escape (by default) is pressed.
+    this.input.keyboard.on(
+      "keydown-Q",
+      () => {
+        if (this.input.mouse.locked) {
+          this.input.mouse.releasePointerLock();
+        }
+      },
+      this,
+    );
+
+    // Move reticle upon locked pointer move
+    this.input.on("pointermove", (pointer) => {
+      if (this.input.mouse.locked) {
+        this.reticle.x += pointer.movementX;
+        this.reticle.y += pointer.movementY;
+      }
+    });
+
     raycaster = this.raycasterPlugin.createRaycaster();
 
     ray = raycaster.createRay({
@@ -106,12 +130,6 @@ class Example extends Phaser.Scene {
     } else {
       this.player.setVelocityY(0);
     }
-
-    // Reticle follows mouse
-    this.input.on("pointermove", (pointer) => {
-      this.reticle.x = pointer.x;
-      this.reticle.y = pointer.y;
-    });
 
     const angle = Phaser.Math.Angle.Between(
       this.player.x,
