@@ -1,19 +1,17 @@
-import PhaserRaycaster from "phaser-raycaster";
+var obstacles;
+var raycaster;
+var ray;
+var intersections;
+var graphics;
 
 class Example extends Phaser.Scene {
   player;
   cursors;
-  raycaster;
-  ray;
-  intersections;
-  obstacles;
-  graphics;
 
   constructor() {
     super("wg-demo");
 
     this.player = null;
-    this.renderTexture = null;
   }
 
   preload() {
@@ -43,9 +41,6 @@ class Example extends Phaser.Scene {
     const x = 400;
     const y = 300;
 
-    // Background
-    const map = this.add.image(x, y, "sky");
-
     this.reticle = this.add.image(x, y, "reticle", 10);
 
     this.player = this.physics.add.sprite(x, y, "handgunSprite");
@@ -63,7 +58,30 @@ class Example extends Phaser.Scene {
     this.cameras.main.zoom = 1.0;
     this.cameras.main.startFollow(this.player);
 
-    // render texture for fog of war
+    raycaster = this.raycasterPlugin.createRaycaster();
+
+    ray = raycaster.createRay({
+      origin: {
+        x: this.player.x,
+        y: this.player.y,
+      },
+    });
+
+    obstacles = this.add.group();
+    createObstacles(this);
+
+    raycaster.mapGameObjects(obstacles.getChildren());
+
+    ray.setConeDeg(60);
+
+    intersections = ray.castCone();
+
+    graphics = this.add.graphics({
+      lineStyle: { width: 1, color: 0x00ff00 },
+      fillStyle: { color: 0xffffff, alpha: 0.3 },
+    });
+
+    draw();
   }
 
   update() {
@@ -95,13 +113,76 @@ class Example extends Phaser.Scene {
       this.reticle.y = pointer.y;
     });
 
-    this.player.rotation = Phaser.Math.Angle.Between(
+    const angle = Phaser.Math.Angle.Between(
       this.player.x,
       this.player.y,
       this.reticle.x,
       this.reticle.y,
     );
+
+    this.player.rotation = angle;
+
+    ray.origin = { x: this.player.x, y: this.player.y };
+
+    ray.setAngle(angle);
+    intersections = ray.castCone();
+    draw();
   }
+}
+
+//create obstacles
+function createObstacles(scene) {
+  //create rectangle obstacle
+  let obstacle = scene.add
+    .rectangle(100, 100, 75, 75)
+    .setStrokeStyle(1, 0xff0000);
+  obstacles.add(obstacle, true);
+
+  //create line obstacle
+  obstacle = scene.add
+    .line(400, 100, 0, 0, 200, 50)
+    .setStrokeStyle(1, 0xff0000);
+  obstacles.add(obstacle);
+
+  //create circle obstacle
+  obstacle = scene.add.circle(650, 100, 50).setStrokeStyle(1, 0xff0000);
+  obstacles.add(obstacle);
+
+  //create polygon obstacle
+  obstacle = scene.add
+    .polygon(650, 500, [0, 0, 50, 50, 100, 0, 100, 75, 50, 100, 0, 50])
+    .setStrokeStyle(1, 0xff0000);
+  obstacles.add(obstacle);
+
+  //create overlapping obstacles
+  for (let i = 0; i < 5; i++) {
+    obstacle = scene.add
+      .rectangle(350 + 30 * i, 550 - 30 * i, 50, 50)
+      .setStrokeStyle(1, 0xff0000);
+    obstacles.add(obstacle, true);
+  }
+
+  //create image obstacle
+  obstacle = scene.add.image(100, 500, "crate");
+  obstacles.add(obstacle, true);
+}
+
+function draw() {
+  //add ray origin to intersections to create full polygon
+  intersections.push(ray.origin);
+  graphics.clear();
+  graphics.fillStyle(0xffffff, 0.3);
+  graphics.fillPoints(intersections);
+  for (let intersection of intersections) {
+    graphics.strokeLineShape({
+      x1: ray.origin.x,
+      y1: ray.origin.y,
+      x2: intersection.x,
+      y2: intersection.y,
+    });
+  }
+  graphics.fillStyle(0xff00ff);
+  graphics.fillPoint(ray.origin.x, ray.origin.y, 3);
 }
 
 const config = {
