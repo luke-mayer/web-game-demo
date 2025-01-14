@@ -4,6 +4,21 @@ var ray;
 var intersections;
 var graphics;
 
+/*
+ * Things that should be communicated to the server:
+ *
+ * - Player position and orientation (x, y, angle)
+ * - Player action (shooting, moving, etc)
+ * - Flashlight on or off (can be rendered based off of position and angle)
+ * - Rest of player state (health, ammo, etc.,)
+ *
+ * Things recieved from the backend:
+ *
+ * - Enemy state (position, orientation, action, flashlight, etc.,)
+ * - Player initial starting position
+ * - Lobby-wide rules or settings
+ * */
+
 class Example extends Phaser.Scene {
   player;
   cursors;
@@ -169,7 +184,10 @@ class Example extends Phaser.Scene {
   }
 }
 
+function createEnemy(scene) {}
+
 //create obstacles
+//can use this later to create walls and cover
 function createObstacles(scene) {
   //create rectangle obstacle
   let obstacle = scene.add
