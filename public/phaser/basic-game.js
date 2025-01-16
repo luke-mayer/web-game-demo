@@ -1,3 +1,5 @@
+const BULLET_SPEED = 6;
+
 var obstacles;
 var raycaster;
 var ray;
@@ -32,12 +34,12 @@ class Example extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("sky", "https://labs.phaser.io/assets/skies/space3.png");
-    this.load.image(
-      "logo",
-      "https://labs.phaser.io/assets/sprites/phaser3-logo.png",
-    );
-    this.load.image("red", "https://labs.phaser.io/assets/particles/red.png");
+    //   this.load.image("sky", "https://labs.phaser.io/assets/skies/space3.png");
+    //    this.load.image(
+    //      "logo",
+    //      "https://labs.phaser.io/assets/sprites/phaser3-logo.png",
+    //    );
+    //    this.load.image("red", "https://labs.phaser.io/assets/particles/red.png");
 
     this.load.spritesheet(
       "handgunSprite",
@@ -48,31 +50,48 @@ class Example extends Phaser.Scene {
       },
     );
 
-    this.load.spritesheet("reticle", "./phaser/assets/IconsAndParticles.png", {
-      frameWidth: 16,
-      frameHeight: 16,
-    });
+    this.load.spritesheet(
+      "iconsAndParticles",
+      "./phaser/assets/IconsAndParticles.png",
+      {
+        frameWidth: 16,
+        frameHeight: 16,
+      },
+    );
   }
 
   create() {
     const x = 400;
     const y = 300;
 
-    this.reticle = this.add.image(x, y, "reticle", 10);
+    this.reticle = this.physics.add.sprite(x, y, "iconsAndParticles", 10);
+    this.reticle.setCollideWorldBounds(true);
+    this.playerBullets = this.physics.add.group({
+      classType: Bullet,
+      runChildUpdate: true,
+    });
+    this.enemyBullets = this.physics.add.group({
+      classType: Bullet,
+      runChildUpdate: true,
+    });
 
-    this.player = this.physics.add.sprite(x, y, "handgunSprite");
+    this.player = this.physics.add.sprite(x, y, "handgunSprite", 2);
+    this.enemy = this.physics.add.sprite(x - 200, y, "handgunSprite", 2);
     this.player.setCollideWorldBounds(true);
+    this.enemy.setCollideWorldBounds(true);
 
     this.anims.create({
-      key: "key",
-      frames: [{ key: "handgunSprite", frame: 0 }],
-      frameRate: 10,
+      key: "handgunShoot",
+      frames: this.anims.generateFrameNumbers("handgunSprite", {
+        frames: [2, 3, 2],
+      }),
+      frameRate: 30,
     });
 
     this.cursors = this.input.keyboard.createCursorKeys();
 
     // Set camera properties
-    this.cameras.main.zoom = 1.0;
+    this.cameras.main.zoom = 2.0;
     this.cameras.main.startFollow(this.player);
 
     // Locks pointer to game (and makes curser hide)
@@ -96,6 +115,22 @@ class Example extends Phaser.Scene {
       if (this.input.mouse.locked) {
         this.reticle.x += pointer.movementX;
         this.reticle.y += pointer.movementY;
+      }
+    });
+
+    this.input.on("pointerdown", (pointer, time, lastFired) => {
+      if (this.player.active === false) {
+        return;
+      }
+
+      // Get bullet from bullets group
+      const bullet = this.playerBullets.get().setActive(true).setVisible(true);
+
+      if (bullet) {
+        bullet.fire(this.player, this.reticle);
+        //this.physics.add.collider(this.enemy, bullet, (enemyHit, bulletHit) =>
+        //  this.enemyHitCallback(enemyHit, bulletHit),
+        //);
       }
     });
 
@@ -143,21 +178,16 @@ class Example extends Phaser.Scene {
     // Movement with arrow keys
     if (this.cursors.left.isDown) {
       this.player.setVelocityX(-160);
-      this.player.anims.play("key", true);
     } else if (this.cursors.right.isDown) {
       this.player.setVelocityX(160);
-      this.player.anims.play("key", true);
     } else {
       this.player.setVelocityX(0);
-      this.player.anims.play("key");
     }
 
     if (this.cursors.up.isDown) {
       this.player.setVelocityY(-160);
-      this.player.anims.play("key", true);
     } else if (this.cursors.down.isDown) {
       this.player.setVelocityY(160);
-      this.player.anims.play("key", true);
     } else {
       this.player.setVelocityY(0);
     }
@@ -240,6 +270,47 @@ function draw() {
   }
   graphics.fillStyle(0xff00ff);
   graphics.fillPoint(ray.origin.x, ray.origin.y, 3);
+}
+
+class Bullet extends Phaser.GameObjects.Image {
+  constructor(scene) {
+    super(scene, 0, 0, "iconsAndParticles", 9);
+    this.speed = BULLET_SPEED;
+    this.born = 0;
+    this.direction = 0;
+    this.xSpeed = 0;
+    this.ySpeed = 0;
+    this.setSize(16, 16, true);
+  }
+
+  fire(shooter, target) {
+    this.setPosition(shooter.x, shooter.y); // Initial position
+    this.direction = Math.atan((target.x - this.x) / (target.y - this.y));
+
+    // Calculate X and y velocity of bullet to moves it from shooter to target
+    if (target.y >= this.y) {
+      this.xSpeed = this.speed * Math.sin(this.direction);
+      this.ySpeed = this.speed * Math.cos(this.direction);
+    } else {
+      this.xSpeed = -this.speed * Math.sin(this.direction);
+      this.ySpeed = -this.speed * Math.cos(this.direction);
+    }
+    // play animation
+    shooter.play("handgunShoot", true);
+
+    this.rotation = shooter.rotation; // angle bullet with shooters rotation
+    this.born = 0; // Time since new bullet spawned
+  }
+
+  update(time, delta) {
+    this.x += this.xSpeed * delta;
+    this.y += this.ySpeed * delta;
+    this.born += delta;
+    if (this.born > 1800) {
+      this.setActive(false);
+      this.setVisible(false);
+    }
+  }
 }
 
 const config = {
