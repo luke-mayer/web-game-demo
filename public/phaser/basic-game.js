@@ -91,7 +91,7 @@ class Example extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
 
     // Set camera properties
-    this.cameras.main.zoom = 2.0;
+    this.cameras.main.zoom = 1.0;
     this.cameras.main.startFollow(this.player);
 
     // Locks pointer to game (and makes curser hide)
@@ -169,6 +169,10 @@ class Example extends Phaser.Scene {
       fillStyle: { color: 0xffffff, alpha: 0.3 },
     });
 
+    const mask = graphics.createGeometryMask();
+
+    this.enemy.setMask(mask);
+
     if (this.flashLightIsOn) {
       draw();
     }
@@ -221,8 +225,11 @@ function createEnemy(scene) {}
 function createObstacles(scene) {
   //create rectangle obstacle
   let obstacle = scene.add
-    .rectangle(100, 100, 75, 75)
+    .rectangle(100, 100, 80, 80)
     .setStrokeStyle(1, 0xff0000);
+  obstacles.add(obstacle, true);
+
+  obstacle = scene.add.rectangle(100, 180, 80, 80).setStrokeStyle(1, 0xff0000);
   obstacles.add(obstacle, true);
 
   //create line obstacle
