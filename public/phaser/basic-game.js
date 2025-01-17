@@ -1,4 +1,4 @@
-const BULLET_SPEED = 6;
+const BULLET_SPEED = 2;
 
 var obstacles;
 var raycaster;
@@ -77,6 +77,7 @@ class Example extends Phaser.Scene {
 
     this.player = this.physics.add.sprite(x, y, "handgunSprite", 2);
     this.enemy = this.physics.add.sprite(x - 200, y, "handgunSprite", 2);
+    this.enemy.setSize(50, 50);
     this.player.setCollideWorldBounds(true);
     this.enemy.setCollideWorldBounds(true);
 
@@ -118,22 +119,6 @@ class Example extends Phaser.Scene {
       }
     });
 
-    this.input.on("pointerdown", (pointer, time, lastFired) => {
-      if (this.player.active === false) {
-        return;
-      }
-
-      // Get bullet from bullets group
-      const bullet = this.playerBullets.get().setActive(true).setVisible(true);
-
-      if (bullet) {
-        bullet.fire(this.player, this.reticle);
-        //this.physics.add.collider(this.enemy, bullet, (enemyHit, bulletHit) =>
-        //  this.enemyHitCallback(enemyHit, bulletHit),
-        //);
-      }
-    });
-
     this.input.keyboard.on(
       "keydown-F",
       () => {
@@ -155,8 +140,36 @@ class Example extends Phaser.Scene {
       },
     });
 
-    obstacles = this.add.group();
+    obstacles = this.physics.add.staticGroup();
     createObstacles(this);
+
+    this.physics.add.collider(this.player, obstacles);
+
+    this.input.on("pointerdown", (pointer, time, lastFired) => {
+      if (this.player.active === false) {
+        return;
+      }
+
+      // Get bullet from bullets group
+      const bullet = this.playerBullets.get().setActive(true).setVisible(true);
+
+      if (bullet) {
+        bullet.fire(this.player, this.reticle);
+        this.physics.add.collider(
+          this.enemy,
+          bullet,
+          (enemyHit, bulletHit) => {
+            console.log("enemy hit, lol");
+            bullet.destroy();
+          },
+          //  this.enemyHitCallback(enemyHit, bulletHit),
+        );
+        this.physics.add.collider(obstacles, bullet, () => {
+          console.log("obstacle hit");
+          bullet.destroy();
+        });
+      }
+    });
 
     raycaster.mapGameObjects(obstacles.getChildren());
 
@@ -265,6 +278,7 @@ function draw() {
   //add ray origin to intersections to create full polygon
   intersections.push(ray.origin);
   graphics.clear();
+  // Flashlight COLOR
   graphics.fillStyle(0xffffff, 0.3);
   graphics.fillPoints(intersections);
   for (let intersection of intersections) {
@@ -304,11 +318,14 @@ class Bullet extends Phaser.GameObjects.Image {
     }
     // play animation
     shooter.play("handgunShoot", true);
-
+    // TODO Will need to change this to setting bullet velocity, instead of
+    // relying on updates below.
     this.rotation = shooter.rotation; // angle bullet with shooters rotation
     this.born = 0; // Time since new bullet spawned
   }
 
+  // TODO change to velocity based instead of manual change. This is messing
+  // up hit detection.
   update(time, delta) {
     this.x += this.xSpeed * delta;
     this.y += this.ySpeed * delta;
@@ -330,7 +347,7 @@ const config = {
     default: "arcade",
     arcade: {
       gravity: { y: 0 },
-      debug: false,
+      debug: true, // Need to set to false later
     },
   },
   plugins: {
