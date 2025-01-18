@@ -78,7 +78,7 @@ class Example extends Phaser.Scene {
 
     this.player = this.physics.add.sprite(x, y, "handgunSprite", 2);
     this.enemy = this.physics.add.sprite(x - 200, y, "handgunSprite", 2);
-    this.enemy.setSize(50, 50);
+    this.enemy.setSize(50, 40);
     this.player.setCollideWorldBounds(true);
     this.enemy.setCollideWorldBounds(true);
 
@@ -161,10 +161,10 @@ class Example extends Phaser.Scene {
 
       if (bullet) {
         bullet.fire(this.player, this.reticle);
-        this.physics.add.collider(
+        this.physics.add.overlap(
           this.enemy,
           bullet,
-          (enemyHit, bulletHit) => {
+          () => {
             console.log("enemy hit, lol");
             bullet.destroy();
           },
