@@ -1,4 +1,5 @@
-const BULLET_SPEED = 2;
+const BULLET_SPEED = 3;
+const BULLET_VELOCITY_FACTOR = 1000;
 
 var obstacles;
 var raycaster;
@@ -111,9 +112,14 @@ class Example extends Phaser.Scene {
       this,
     );
 
+    // Needed to keep the reticle locked relative to the screen when the camera moves.
+    this.prevCamScrollX = this.cameras.main.scrollX;
+    this.prevCamScrollY = this.cameras.main.scrollY;
+
     // Move reticle upon locked pointer move
     this.input.on("pointermove", (pointer) => {
       if (this.input.mouse.locked) {
+        // Reticle does not move on the screen when the game camera moves.
         this.reticle.x += pointer.movementX;
         this.reticle.y += pointer.movementY;
       }
@@ -228,6 +234,18 @@ class Example extends Phaser.Scene {
     } else {
       graphics.clear();
     }
+
+    // Updating reticle position
+    if (this.input.mouse.locked) {
+      const deltaX = this.cameras.main.scrollX - this.prevCamScrollX;
+      const deltaY = this.cameras.main.scrollY - this.prevCamScrollY;
+
+      this.reticle.x += deltaX;
+      this.reticle.y += deltaY;
+    }
+
+    this.prevCamScrollX = this.cameras.main.scrollX;
+    this.prevCamScrollY = this.cameras.main.scrollY;
   }
 }
 
@@ -293,7 +311,7 @@ function draw() {
   graphics.fillPoint(ray.origin.x, ray.origin.y, 3);
 }
 
-class Bullet extends Phaser.GameObjects.Image {
+class Bullet extends Phaser.Physics.Arcade.Image {
   constructor(scene) {
     super(scene, 0, 0, "iconsAndParticles", 9);
     this.speed = BULLET_SPEED;
@@ -301,7 +319,7 @@ class Bullet extends Phaser.GameObjects.Image {
     this.direction = 0;
     this.xSpeed = 0;
     this.ySpeed = 0;
-    this.setSize(16, 16, true);
+    //this.setSize(16, 16);
   }
 
   fire(shooter, target) {
@@ -320,6 +338,8 @@ class Bullet extends Phaser.GameObjects.Image {
     shooter.play("handgunShoot", true);
     // TODO Will need to change this to setting bullet velocity, instead of
     // relying on updates below.
+    this.setVelocityX(this.xSpeed * BULLET_VELOCITY_FACTOR);
+    this.setVelocityY(this.ySpeed * BULLET_VELOCITY_FACTOR);
     this.rotation = shooter.rotation; // angle bullet with shooters rotation
     this.born = 0; // Time since new bullet spawned
   }
@@ -327,8 +347,8 @@ class Bullet extends Phaser.GameObjects.Image {
   // TODO change to velocity based instead of manual change. This is messing
   // up hit detection.
   update(time, delta) {
-    this.x += this.xSpeed * delta;
-    this.y += this.ySpeed * delta;
+    //this.x += this.xSpeed * delta;
+    //this.y += this.ySpeed * delta;
     this.born += delta;
     if (this.born > 1800) {
       this.setActive(false);
